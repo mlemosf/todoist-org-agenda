@@ -1,9 +1,5 @@
-#+TITLE: Org Agenda Configuration file
-#+AUTHOR: Matheus Lemos <mlemosf@tutanota.com>
+;;; etc/org-agenda/todoist-org-agenda.el -*- lexical-binding: t; -*-
 
-* Setup tasks from Todoist using Todoist API
-** Get url with headers
-#+begin_src emacs-lisp
 (defun mlemosf/get-url-json-plist (url headers)
   "Get URL with HEADERS and return JSON converted to plist"
 (with-temp-buffer
@@ -15,21 +11,14 @@
          (resp-json-plist (json-parse-string resp :object-type 'plist))
          )
     resp-json-plist)))
-#+end_src
 
-** Get bearer token from autinfo
-#+begin_src emacs-lisp
 (defun mlemosf/get-bearer-token (host)
   "Get Bearer token from authinfo file for host HOST"
   (let (
         (auth (nth 0 (auth-source-search :host host
                                          :requires '(user secret))))
       ) (concat "Bearer " (funcall (plist-get auth :secret)))))
-#+end_src
 
-
-** Convert tasks from given project to org
-#+begin_src emacs-lisp
 (defun mlemosf/get-todoist-tasks-by-project (project-id buffer)
   "Get tasks from project given in PROJECT-ID and write them to buffer."
   (let (
@@ -44,7 +33,7 @@
       (seq-doseq (task-id ids)
         (let ((task (mlemosf/get-url-json-plist (format "%s/%s" task-url task-id) headers)))
           (let (
-                (id (plist-get task :id))
+                (id (pist-get task :id))
                 (content (plist-get task :content))
                 (due-date
                  (format-time-string "<%Y-%m-%d %a>" (parse-iso8601-time-string
@@ -55,11 +44,7 @@
                 )
             (princ (format "** TODO %s \n   SCHEDULED: %s\n   :PROPERTIES:\n   :CREATED: %s\n" content due-date created) buffer))
 )))))
-#+end_src
 
-
-** Get projects and return all tasks by project in org
-#+begin_src emacs-lisp
 (defun mlemosf/get-todoist-tasks ()
   "Get tasks from Todoist and store them in org buffer"
   (interactive)
@@ -78,7 +63,3 @@
              (mlemosf/get-url-json-plist project-url headers))
     (set-buffer orgbuf)
     (write-file agenda-file)))
-#+end_src
-
-#+RESULTS:
-: mlemosf/get-todoist-tasks
