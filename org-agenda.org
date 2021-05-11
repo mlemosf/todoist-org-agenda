@@ -1,0 +1,77 @@
+#+TITLE: Org Agenda Configuration file
+#+AUTHOR: Matheus Lemos <mlemosf@tutanota.com>
+
+* Setup tasks from Todoist using Todoist API
+** Get url with headers
+#+begin_src emacs-lisp
+(defun mlemosf/get-url-json-plist (url headers)
+  "Get URL with HEADERS and return JSON converted to plist"
+(with-temp-buffer
+  (let ((url-request-extra-headers headers))
+    (url-insert-file-contents url))
+
+  (let* (
+         (resp (buffer-string))
+         (resp-json-plist (json-parse-string resp :object-type 'plist))
+         )
+    resp-json-plist)))
+#+end_src
+
+** Get bearer token from autinfo
+#+begin_src emacs-lisp
+(defun mlemosf/get-bearer-token (host)
+  "Get Bearer token from authinfo file for host HOST"
+  (let (
+        (auth (nth 0 (auth-source-search :host host
+                                         :requires '(user secret))))
+      ) (concat "Bearer " (funcall (plist-get auth :secret)))))
+#+end_src
+
+
+** Convert tasks from given project to org
+#+begin_src emacs-lisp
+(defun mlemosf/get-todoist-tasks-by-project (project-id)
+  "Get tasks from project given in PROJECT-ID and write them to org file."
+(let (
+      (project-tasks-url (format "https://api.todoist.com/rest/v1/tasks?project_id=%s" project-id))
+      (headers `(("Authorization" . ,(mlemosf/get-bearer-token "api.todoist.com")))))
+  (let (
+        (ids (seq-map (lambda (json-plist)
+                        (plist-get json-plist :id))
+                      (mlemosf/get-url-json-plist project-tasks-url headers)))
+        (task-url (format "https://api.todoist.com/rest/v1/tasks"))
+        )
+    (seq-doseq (task-id ids)
+      (let ((task (mlemosf/get-url-json-plist (format "%s/%s" task-url task-id) headers)))
+        (let (
+              (id (plist-get task :id))
+              (content (plist-get task :content))
+              (due-date
+               (format-time-string "<%Y-%m-%d %a>" (parse-iso8601-time-string
+                                                    (plist-get (plist-get task :due) :date))))
+              (created
+               (format-time-string "[%Y-%m-%d %a %H:%M]" (parse-iso8601-time-string
+                                                          (plist-get (plist-get task :due) :date))))
+              )
+          (message (format "** TODO %s \n   SCHEDULED: %s\n   :PROPERTIES:\n   :CREATED: %s\n " content due-date created)))
+)))))
+#+end_src
+
+
+** Get projects and return all tasks by project in org
+#+begin_src emacs-lisp
+(defun mlemosf/get-todoist-tasks ()
+  "Get tasks from Todoist and store them in org buffer"
+  (let (
+        (project-url "https://api.todoist.com/rest/v1/projects")
+        (headers `(("Authorization" . ,(mlemosf/get-bearer-token "api.todoist.com")))))
+    (seq-map (lambda (project-plist)
+               (let (
+                     (id (plist-get project-plist :id))
+                     (name (plist-get project-plist :name)))
+               (print (format "* %s\n   :PROPERTIES:\n   :CATEGORY: %s\n   :END:\n\n" name name))
+               (mlemosf/get-todoist-tasks-by-project id))
+             )
+           (mlemosf/get-url-json-plist project-url headers)) project-url))
+#+end_src
+
