@@ -2,25 +2,27 @@
 
 (defun mlemosf/get-url-json-plist (url headers)
   "Get URL with HEADERS and return JSON converted to plist"
-(with-temp-buffer
-  (let ((url-request-extra-headers headers))
-    (url-insert-file-contents url))
-
-  (let* (
-         (resp (buffer-string))
-         (resp-json-plist (json-parse-string resp :object-type 'plist))
-         )
-    resp-json-plist)))
+  (interactive)
+  (with-temp-buffer
+    (let ((url-request-extra-headers headers))
+      (url-insert-file-contents url))
+    (let* (
+           (resp (buffer-string))
+           (resp-json-plist (json-parse-string resp :object-type 'plist)))
+      resp-json-plist)))
 
 (defun mlemosf/get-bearer-token (host)
   "Get Bearer token from authinfo file for host HOST"
+  (interactive)
   (let (
         (auth (nth 0 (auth-source-search :host host
                                          :requires '(user secret))))
-      ) (concat "Bearer " (funcall (plist-get auth :secret)))))
+        )
+    (concat "Bearer " (funcall (plist-get auth :secret)))))
 
 (defun mlemosf/get-todoist-tasks-by-project (project-id buffer)
   "Get tasks from project given in PROJECT-ID and write them to buffer."
+  (interactive)
   (let (
       (project-tasks-url (format "https://api.todoist.com/rest/v1/tasks?project_id=%s" project-id))
       (headers `(("Authorization" . ,(mlemosf/get-bearer-token "api.todoist.com")))))
@@ -33,7 +35,7 @@
       (seq-doseq (task-id ids)
         (let ((task (mlemosf/get-url-json-plist (format "%s/%s" task-url task-id) headers)))
           (let (
-                (id (pist-get task :id))
+                (id (plist-get task :id))
                 (content (plist-get task :content))
                 (due-date
                  (format-time-string "<%Y-%m-%d %a>" (parse-iso8601-time-string
