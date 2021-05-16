@@ -1,6 +1,4 @@
-;;; etc/org-agenda/todoist-org-agenda.el -*- lexical-binding: t; -*-
-
-(defun mlemosf/get-url-json-plist (url headers)
+(defun mlemosf/todoist/get-url-json-plist (url headers)
   "Get URL with HEADERS and return JSON converted to plist"
   (interactive)
   (with-temp-buffer
@@ -11,7 +9,7 @@
            (resp-json-plist (json-parse-string resp :object-type 'plist)))
       resp-json-plist)))
 
-(defun mlemosf/get-bearer-token (host)
+(defun mlemosf/todoist/get-bearer-token (host)
   "Get Bearer token from authinfo file for host HOST"
   (interactive)
   (let (
@@ -20,7 +18,7 @@
         )
     (concat "Bearer " (funcall (plist-get auth :secret)))))
 
-(defun mlemosf/get-todoist-tasks-by-project (project-id buffer)
+(defun mlemosf/todoist/get-todoist-tasks-by-project (project-id buffer)
   "Get tasks from project given in PROJECT-ID and write them to buffer."
   (interactive)
   (let (
@@ -36,6 +34,7 @@
         (let ((task (mlemosf/get-url-json-plist (format "%s/%s" task-url task-id) headers)))
           (let (
                 (id (plist-get task :id))
+                (origin "todoist")
                 (content (plist-get task :content))
                 (due-date
                  (format-time-string "<%Y-%m-%d %a>" (parse-iso8601-time-string
@@ -44,10 +43,10 @@
                  (format-time-string "[%Y-%m-%d %a %H:%M]" (parse-iso8601-time-string
                                                             (plist-get (plist-get task :due) :date))))
                 )
-            (princ (format "** TODO %s \n   SCHEDULED: %s\n   :PROPERTIES:\n   :CREATED: %s\n" content due-date created) buffer))
-)))))
+            (princ (format "** TODO %s \n   SCHEDULED: %s\n   :PROPERTIES:\n   :id: %s\n   :origin: %s\n   :END:\n   :CREATED: %s\n" content due-date id origin created) buffer))
+          )))))
 
-(defun mlemosf/get-todoist-tasks ()
+(defun mlemosf/todoist/get-todoist-tasks ()
   "Get tasks from Todoist and store them in org buffer"
   (interactive)
   (setq agenda-file "~/.config/org/todoist.org")
