@@ -23,15 +23,15 @@
   (interactive)
   (let (
       (project-tasks-url (format "https://api.todoist.com/rest/v1/tasks?project_id=%s" project-id))
-      (headers `(("Authorization" . ,(mlemosf/get-bearer-token "api.todoist.com")))))
+      (headers `(("Authorization" . ,(mlemosf/todoist/get-bearer-token "api.todoist.com")))))
     (let (
         (ids (seq-map (lambda (json-plist)
                         (plist-get json-plist :id))
-                      (mlemosf/get-url-json-plist project-tasks-url headers)))
+                      (mlemosf/todoist/get-url-json-plist project-tasks-url headers)))
         (task-url (format "https://api.todoist.com/rest/v1/tasks"))
         )
       (seq-doseq (task-id ids)
-        (let ((task (mlemosf/get-url-json-plist (format "%s/%s" task-url task-id) headers)))
+        (let ((task (mlemosf/todoist/get-url-json-plist (format "%s/%s" task-url task-id) headers)))
           (let (
                 (id (plist-get task :id))
                 (origin "todoist")
@@ -53,14 +53,34 @@
   (let (
         (orgbuf (generate-new-buffer "*org-todoist-output"))
         (project-url "https://api.todoist.com/rest/v1/projects")
-        (headers `(("Authorization" . ,(mlemosf/get-bearer-token "api.todoist.com")))))
+        (headers `(("Authorization" . ,(mlemosf/todoist/get-bearer-token "api.todoist.com")))))
     (seq-map (lambda (project-plist)
                (let (
                      (id (plist-get project-plist :id))
                      (name (plist-get project-plist :name)))
                (princ (format "* %s\n   :PROPERTIES:\n   :CATEGORY: %s\n   :END:\n\n" name name) orgbuf)
-               (mlemosf/get-todoist-tasks-by-project id orgbuf))
+               (mlemosf/todoist/get-todoist-tasks-by-project id orgbuf))
              )
-             (mlemosf/get-url-json-plist project-url headers))
+             (mlemosf/todoist/get-url-json-plist project-url headers))
     (set-buffer orgbuf)
     (write-file agenda-file)))
+
+(defun my-kill-buffer (status)
+  (kill-buffer (current-buffer)))
+
+(defun mlemosf/request/url-post (url headers)
+        (let (
+              (url-request-method "POST")
+              (url-request-extra-headers headers)
+              (url-request-data nil)
+              )
+          (url-retrieve url 'my-kill-buffer)))
+
+(defun mlemosf/todoist/close-task (id)
+  "Mark task with id ID as closed on Todoist API"
+  (interactive)
+  (let (
+        (url (format "https://api.todoist.com/rest/v1/tasks/%s/close" id))
+        (headers
+         `(("Authorization" . ,(mlemosf/todoist/get-bearer-token "api.todoist.com")))))
+    (mlemosf/request/url-post url headers)))
