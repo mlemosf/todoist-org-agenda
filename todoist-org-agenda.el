@@ -85,7 +85,7 @@
          `(("Authorization" . ,(mlemosf/todoist/get-bearer-token "api.todoist.com")))))
     (mlemosf/request/url-post url headers)))
 
-(defun get-todoist-done-ids ()
+(defun mlemosf/todoist/get-todoist-done-ids ()
   "Get list of all DONE tasks on org buffer"
   (interactive)
   (org-element-map (org-element-parse-buffer) 'headline
@@ -97,3 +97,11 @@
         (if (and
              (eq todo-state 'done))
             id)))))
+
+(defun mlemosf/todoist/close-done-tasks ()
+  "Close all DONE tasks on todoist from the org file"
+  (interactive)
+  (let (
+        (tasks (mlemosf/todoist/get-todoist-done-ids)))
+    (seq-doseq (task tasks)
+      (mlemosf/todoist/close-task task))))
