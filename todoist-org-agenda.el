@@ -84,3 +84,16 @@
         (headers
          `(("Authorization" . ,(mlemosf/todoist/get-bearer-token "api.todoist.com")))))
     (mlemosf/request/url-post url headers)))
+
+(defun get-todoist-done-ids ()
+  "Get list of all DONE tasks on org buffer"
+  (interactive)
+  (org-element-map (org-element-parse-buffer) 'headline
+    (lambda (x)
+      (let (
+            (todo-state (org-element-property :todo-type x))
+            (origin (org-element-property :ORIGIN x))
+            (id (org-element-property :ID x)))
+        (if (and
+             (eq todo-state 'done))
+            id)))))
