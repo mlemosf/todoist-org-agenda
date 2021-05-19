@@ -1,6 +1,5 @@
 (defun mlemosf/todoist/get-url-json-plist (url headers)
   "Get URL with HEADERS and return JSON converted to plist"
-  (interactive)
   (with-temp-buffer
     (let ((url-request-extra-headers headers))
       (url-insert-file-contents url))
@@ -11,7 +10,6 @@
 
 (defun mlemosf/todoist/get-bearer-token (host)
   "Get Bearer token from authinfo file for host HOST"
-  (interactive)
   (let (
         (auth (nth 0 (auth-source-search :host host
                                          :requires '(user secret))))
@@ -20,7 +18,6 @@
 
 (defun mlemosf/todoist/get-todoist-tasks-by-project (project-id buffer)
   "Get tasks from project given in PROJECT-ID and write them to buffer."
-  (interactive)
   (let (
       (project-tasks-url (format "https://api.todoist.com/rest/v1/tasks?project_id=%s" project-id))
       (headers `(("Authorization" . ,(mlemosf/todoist/get-bearer-token "api.todoist.com")))))
@@ -63,7 +60,9 @@
              )
              (mlemosf/todoist/get-url-json-plist project-url headers))
     (set-buffer orgbuf)
-    (write-file agenda-file)))
+    (write-file agenda-file)
+    (message "Todoist tasks downloaded successfully")
+    (kill-buffer orgbuf)))
 
 (defun my-kill-buffer (status)
   (kill-buffer (current-buffer)))
@@ -78,7 +77,6 @@
 
 (defun mlemosf/todoist/close-task (id)
   "Mark task with id ID as closed on Todoist API"
-  (interactive)
   (let (
         (url (format "https://api.todoist.com/rest/v1/tasks/%s/close" id))
         (headers
@@ -87,7 +85,6 @@
 
 (defun mlemosf/todoist/get-todoist-done-ids ()
   "Get list of all DONE tasks on org buffer"
-  (interactive)
   (org-element-map (org-element-parse-buffer) 'headline
     (lambda (x)
       (let (
@@ -104,4 +101,5 @@
   (let (
         (tasks (mlemosf/todoist/get-todoist-done-ids)))
     (seq-doseq (task tasks)
-      (mlemosf/todoist/close-task task))))
+      (mlemosf/todoist/close-task task))
+    (message "Tasks closed successfully")))
