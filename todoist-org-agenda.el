@@ -12,8 +12,7 @@
   "Get Bearer token from authinfo file for host HOST"
   (let (
         (auth (nth 0 (auth-source-search :host host
-                                         :requires '(user secret))))
-        )
+                                         :requires '(secret)))))
     (concat "Bearer " (funcall (plist-get auth :secret)))))
 
 (defun mlemosf/todoist/get-todoist-tasks-by-project (project-id buffer)
@@ -48,7 +47,7 @@
   (interactive)
   (setq agenda-file "~/.config/org/todoist.org")
   (let (
-        (orgbuf (generate-new-buffer "*org-todoist-output"))
+        (orgbuf (generate-new-buffer "*org-todoist-output*"))
         (project-url "https://api.todoist.com/rest/v1/projects")
         (headers `(("Authorization" . ,(mlemosf/todoist/get-bearer-token "api.todoist.com")))))
     (seq-map (lambda (project-plist)
