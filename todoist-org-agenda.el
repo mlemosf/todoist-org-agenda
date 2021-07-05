@@ -12,7 +12,7 @@
   "Get Bearer token from authinfo file for host HOST"
   (let (
         (auth (nth 0 (auth-source-search :host host
-                                         :requires '(secret)))))
+                                         :requires '(user secret)))))
     (concat "Bearer " (funcall (plist-get auth :secret)))))
 
 (defun mlemosf/todoist/get-todoist-tasks-by-project (project-id buffer)
@@ -95,10 +95,13 @@
             id)))))
 
 (defun mlemosf/todoist/close-done-tasks ()
-  "Close all DONE tasks on todoist from the org file"
   (interactive)
-  (let (
-        (tasks (mlemosf/todoist/get-todoist-done-ids)))
-    (seq-doseq (task tasks)
-      (mlemosf/todoist/close-task task))
-    (message "Tasks closed successfully")))
+  (catch 'buffer-not-exist
+    (if (eq (get-buffer "todoist.org") nil)
+        (throw 'buffer-not-exist "todoist.org buffer is not open")
+      (set-buffer (get-buffer "todoist.org"))
+      (let (
+            (tasks (mlemosf/todoist/get-todoist-done-ids)))
+        (seq-doseq (task tasks)
+          (mlemosf/todoist/close-task task))
+        (message "Tasks closed successfully")))))
