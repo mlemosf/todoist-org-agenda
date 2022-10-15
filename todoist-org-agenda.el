@@ -1,4 +1,4 @@
-(load-file "~/.emacs.d/etc/utils/http.el")
+(load-file "$HOME/.emacs.d/etc/todoist-org-agenda/http.el")
 
 (defun mlemosf/todoist/get-todoist-tasks-by-project (project-id buffer)
   "Get tasks from project given in PROJECT-ID and write them to buffer."
@@ -14,11 +14,12 @@
         (let* (
                (task (mlemosf/http/get-url-json-plist (format "%s/%s" task-url task-id) headers))
                (due-date (plist-get (plist-get task :due) :date))
+			   (pa)
                (id (plist-get task :id))
                (origin "todoist")
                (content (plist-get task :content))
-               (due-date-formatted (format-time-string "<%Y-%m-%d %a>" (parse-iso8601-time-string due-date)))
-               (created (format-time-string "[%Y-%m-%d %a %H:%M]" (parse-iso8601-time-string due-date))))
+               (due-date-formatted (format-time-string "<%Y-%m-%d %a>" (parse-iso8601-time-string (concat due-date "T00:00:00"))))
+               (created (format-time-string "[%Y-%m-%d %a %H:%M]" (parse-iso8601-time-string (concat due-date "T00:00:00")))))
             (princ (format "** TODO %s\nSCHEDULED: %s\n:PROPERTIES:\n:id:%s\n:origin:%s\n:END:\n" content due-date-formatted id origin created) buffer))))))
 
 (defun mlemosf/todoist/get-todoist-tasks ()
@@ -40,6 +41,7 @@
       (write-file agenda-file)
       (message "Todoist tasks downloaded successfully")
       (kill-buffer orgbuf)))
+(mlemosf/todoist/get-todoist-tasks)
 
 (defun mlemosf/todoist/close-task (id)
   "Mark task with id ID as closed on Todoist API"

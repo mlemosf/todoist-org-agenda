@@ -38,7 +38,11 @@ This module has no prerequisites.
 
 # Installation
 
-Just download the ****todoist-org-agenda.el**** file and store it where you want it. To load all functions, just call load-file from the command bar.
+Clone the repository to an **etc** folder inside your emacs.d.
+
+	git clone https://github.com/mlemosf/todoist-org-agenda.git ~/.emacs.d/etc/todoist-org-agenda
+
+To load all functions, just call load-file from the command bar.
 
     M-x load-file FILE-NAME RET
 
